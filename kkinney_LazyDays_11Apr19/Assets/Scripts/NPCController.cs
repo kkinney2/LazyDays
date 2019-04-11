@@ -4,6 +4,15 @@ using UnityEngine;
 
 public class NPCController : MonoBehaviour {
 
+    public enum Job
+    {
+        None = 0,
+        Lumberjack,
+        Farmer
+    }
+
+    Job job;
+
 	// Use this for initialization
 	void Start () {
 		
@@ -13,4 +22,31 @@ public class NPCController : MonoBehaviour {
 	void Update () {
 		
 	}
+
+    public void AssignJob()
+    {
+        switch (job)
+        {
+            case Job.Lumberjack:
+                gameObject.AddComponent<Lumberjack>();
+                break;
+
+            case Job.Farmer:
+                gameObject.AddComponent<Farmer>();
+                break;
+
+            default:
+                break;
+        }
+    }
+
+    public void FindTaskObject()
+    {
+        // Find Object
+    }
+
+    public void Idle()
+    {
+
+    }
 }
