@@ -16,7 +16,13 @@ public class GameController : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-		
+        if (canSpawnNPC)
+        {
+            if (Input.GetMouseButtonDown(1))
+            {
+                Ray ray = new Ray(transform.position, Camera.transform.forward);
+            }
+        }
 	}
 
     public void SpawnNPC(Vector3 pos)
