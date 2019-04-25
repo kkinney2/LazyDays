@@ -4,14 +4,7 @@ using UnityEngine;
 
 public class NPCController : MonoBehaviour {
 
-    public enum Job
-    {
-        None = 0,
-        Lumberjack,
-        Farmer
-    }
-
-    Job job;
+    StateMachine stateMachine;
 
 	// Use this for initialization
 	void Start () {
@@ -20,33 +13,33 @@ public class NPCController : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-		
+        stateMachine.Update();
 	}
+}
 
-    public void AssignJob()
+public class Find : IState
+{
+
+    NPCController owner;
+    StateMachine stateMachine;
+
+    public Find(NPCController owner) { this.owner = owner; }
+
+    public void Enter()
     {
-        switch (job)
-        {
-            case Job.Lumberjack:
-                gameObject.AddComponent<Lumberjack>();
-                break;
-
-            case Job.Farmer:
-                gameObject.AddComponent<Farmer>();
-                break;
-
-            default:
-                break;
-        }
+        Debug.Log("Entering State: Find ");
     }
 
-    public void FindTaskObject()
+    public void Execute()
     {
-        // Find Object
+        Debug.Log("Updating State: Find");
+        stateMachine.Update();
     }
 
-    public void Idle()
+    public void Exit()
     {
-
+        Debug.Log("Exiting State: Find");
     }
 }
+
+

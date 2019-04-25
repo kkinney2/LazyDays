@@ -2,17 +2,30 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Lumberjack : NPCController {
+// Interface structure sourced from:
+// https://forum.unity.com/threads/c-proper-state-machine.380612/ (Unity Forum)
+// https://github.com/libgdx/gdx-ai/wiki/State-Machine (Mat Buckland)
 
-	// Use this for initialization
-	void Start () {
-		
-	}
+public class Lumberjack : IState
+{
+    NPCController owner;
+    StateMachine stateMachine;
 
-    // Update is called once per frame
-    void Update()
+    public Lumberjack(NPCController owner) { this.owner = owner; }
+
+    public void Enter()
     {
-
+        Debug.Log("Entering State: Lumberjack ");
     }
 
+    public void Execute()
+    {
+        Debug.Log("Updating State: Lumberjack");
+        stateMachine.Update();
+    }
+
+    public void Exit()
+    {
+        Debug.Log("Exiting State: Lumberjack");
+    }
 }
