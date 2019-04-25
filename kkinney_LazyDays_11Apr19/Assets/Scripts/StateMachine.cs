@@ -46,7 +46,7 @@ public class StateMachine
         return currentState;
     }
 
-    public bool isInState(S state)
+    public bool isInState(IState state)
     {
         if (currentState == state)
         {
