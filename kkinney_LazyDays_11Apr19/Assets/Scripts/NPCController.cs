@@ -10,12 +10,12 @@ public class NPCController : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-		
+        stateMachine = new StateMachine();
 	}
 	
 	// Update is called once per frame
 	void Update () {
-
+        /* TODO: Commented out due to unfinished work
         if (stateMachine.getCurrentState() == null)
         {
             // Ask user for Job
@@ -29,7 +29,7 @@ public class NPCController : MonoBehaviour {
                 AssignJob(newJob);
             }
             
-        }
+        }*/
         stateMachine.Update();
 	}
 
