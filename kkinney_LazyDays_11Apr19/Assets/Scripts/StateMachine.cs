@@ -21,7 +21,7 @@ public class StateMachine
         if (currentState != null)
         {
             currentState.Exit();
-            pastStates[pastStates.Length] = currentState;
+            //pastStates[pastStates.Length] = currentState;
         }
 
         currentState = newState;

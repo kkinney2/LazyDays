@@ -9,7 +9,6 @@ using UnityEngine;
 public class Lumberjack : IState
 {
     NPCController owner;
-    StateMachine stateMachine;
 
     public Lumberjack(NPCController owner) { this.owner = owner; }
 
@@ -21,7 +20,6 @@ public class Lumberjack : IState
     public void Execute()
     {
         Debug.Log("Updating State: Lumberjack");
-        stateMachine.Update();
     }
 
     public void Exit()

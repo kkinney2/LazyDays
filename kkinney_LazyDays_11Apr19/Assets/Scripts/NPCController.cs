@@ -4,7 +4,9 @@ using UnityEngine;
 
 public class NPCController : MonoBehaviour {
 
+    public GameObject JobMenu;
     StateMachine stateMachine;
+    string newJob;
 
 	// Use this for initialization
 	void Start () {
@@ -13,33 +15,62 @@ public class NPCController : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
+
+        if (stateMachine.getCurrentState() == null)
+        {
+            // Ask user for Job
+            StartCoroutine(ObtainJob());
+            JobMenu.gameObject.SetActive(false);
+            StopCoroutine(ObtainJob());
+
+            if (newJob != null || newJob != "")
+            {
+                // Assign new Job
+                AssignJob(newJob);
+            }
+            
+        }
         stateMachine.Update();
 	}
+
+    IEnumerator ObtainJob()
+    {
+        while (true)
+        {
+            if(JobMenu.gameObject.activeSelf == false)
+            {
+                JobMenu.gameObject.SetActive(true);
+            }
+            if(newJob != null || newJob != "")
+            {
+                break;
+            }
+            yield return new WaitForSeconds(0.1f);
+        }
+        yield break;
+    }
+
+    void AssignJob(string state)
+    {
+
+        switch (state)
+        {
+            case "LumberJack":
+                stateMachine.ChangeState(new Lumberjack(this));
+                break;
+
+            case "Farmer":
+                stateMachine.ChangeState(new Farmer(this));
+                break;
+
+            default:
+                Debug.Log("State doesn't exist or has no case");
+                break;
+        }
+    }
+
+    void Logic()
+    {
+
+    }
 }
-
-public class Find : IState
-{
-
-    NPCController owner;
-    StateMachine stateMachine;
-
-    public Find(NPCController owner) { this.owner = owner; }
-
-    public void Enter()
-    {
-        Debug.Log("Entering State: Find ");
-    }
-
-    public void Execute()
-    {
-        Debug.Log("Updating State: Find");
-        stateMachine.Update();
-    }
-
-    public void Exit()
-    {
-        Debug.Log("Exiting State: Find");
-    }
-}
-
-
