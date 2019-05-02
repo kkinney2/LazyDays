@@ -5,12 +5,26 @@ using UnityEngine;
 public class GameController : MonoBehaviour {
 
     public GameObject NPC;
+    public GameObject PlantBed;
+    public GameObject Tree;
     public Camera mainCamera;
 
-    bool canSpawnNPC = true;
+    bool canSpawnObj = true;
+    bool objSpawned = false;
+    GameObject spawnedObj;
+    GameObject objToSpawn;
 
-	// Use this for initialization
-	void Start () {
+    public enum SpawnList
+    {
+        // TODO: Create array for obj's to spawn
+        NPC = 0,
+        PlantBed,
+        Tree
+    }
+
+    // Use this for initialization
+    void Start () {
+
         // References camera in scene tagged 'MainCamera'
         if(mainCamera == null)
         {
@@ -18,34 +32,93 @@ public class GameController : MonoBehaviour {
         }
 
         // Keep mouse locked to center of screen
+        // Use 'esc' to break in editor play mode
         Cursor.lockState = CursorLockMode.Locked;
     }
 	
 	// Update is called once per frame
 	void Update () {
-        if (canSpawnNPC)
+        if (canSpawnObj)
         {
-            if (Input.GetMouseButtonDown(0))
+            // What Obj to spawn
+            //     >> Buttons will assign Obj
+
+            // Determine if space is acceptable
+            //     >> Spawn Obj and move with raycast?
+
+            // 'Spawn' object
+            //     >> Release Obj from camera if acceptable, else destroy
+
+            Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
+
+            RaycastHit hitInfo;
+
+            if (Physics.Raycast(ray, out hitInfo))
             {
-                Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
+                Debug.Log("Ray hit: " + hitInfo.collider.gameObject.name);
 
-                RaycastHit hitInfo;
-
-                if (Physics.Raycast(ray, out hitInfo))
+                // TODO: Obj following camera for spawning
+                // Spawn the Obj
+                if (!objSpawned)
                 {
-                    Debug.Log("Ray hit: " + hitInfo.collider.gameObject.name);
+                    spawnedObj = objToSpawn;
+                    SpawnObj(spawnedObj, hitInfo.point);
+                    objSpawned = true;
                 }
+                else
+                {
+                    spawnedObj.transform.position = hitInfo.point;
+                }
+
+                // Basic Framework for Spawning
+                /* << WORKS >>
+                if (Input.GetMouseButtonDown(0))
+                {
+                    Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
+
+                    RaycastHit hitInfo;
+
+                    if (Physics.Raycast(ray, out hitInfo))
+                    {
+                        Debug.Log("Ray hit: " + hitInfo.collider.gameObject.name);
+
+                        // Spawn the Obj
+                        if (true)
+                        {
+                            SpawnObj(objToSpawn, hitInfo.point);
+                        }
+                    }
+                }*/
             }
         }
 	}
 
-    public void SpawnNPC(Vector3 pos)
+    void SetObjToSpawn(SpawnList obj)
     {
-        Instantiate(NPC, pos, mainCamera.transform.rotation);
+        switch (obj)
+        {
+            case SpawnList.NPC:
+                objToSpawn = NPC;
+                break;
+            case SpawnList.PlantBed:
+                objToSpawn = PlantBed;
+                break;
+            case SpawnList.Tree:
+                objToSpawn = Tree;
+                break;
+            default:
+                Debug.Log("Null or No such Item to Spawn");
+                break;
+        }
     }
 
-    public void ToggleNPCSpawner()
+    void SpawnObj(GameObject obj, Vector3 pos)
     {
-        canSpawnNPC = !canSpawnNPC;
+        Instantiate(NPC, pos, Quaternion.identity);
+    }
+
+    public void ToggleObjSpawner()
+    {
+        canSpawnObj = !canSpawnObj;
     }
 }

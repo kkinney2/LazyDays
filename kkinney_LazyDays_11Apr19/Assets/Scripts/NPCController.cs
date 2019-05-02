@@ -19,6 +19,8 @@ public class NPCController : MonoBehaviour {
         if (stateMachine.getCurrentState() == null)
         {
             // Ask user for Job
+            TODO: Unlock mouse or numpad for options
+            Cursor.lockState = CursorLockMode.???;
             StartCoroutine(ObtainJob());
             JobMenu.gameObject.SetActive(false);
             StopCoroutine(ObtainJob());
