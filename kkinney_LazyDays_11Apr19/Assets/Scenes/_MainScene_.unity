@@ -626,6 +626,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   NPC: {fileID: 1673969362364754, guid: a36f16d3437c2334d9f5d63a67f8e060, type: 2}
+  PlantBed: {fileID: 0}
+  Tree: {fileID: 0}
   mainCamera: {fileID: 0}
 --- !u!4 &805204989
 Transform:

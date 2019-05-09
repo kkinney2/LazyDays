@@ -2,15 +2,30 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+public class Experience
+{
+    public int level;
+    public float exp;
+    public float expLvlMax;
+
+}
+
 public class NPCController : MonoBehaviour {
 
     public GameObject JobMenu;
+    public Experience myExp;
+
     StateMachine stateMachine;
     string newJob;
+    
 
 	// Use this for initialization
 	void Start () {
         stateMachine = new StateMachine();
+
+        myExp.level = 1;
+        myExp.exp = 0;
+        myExp.expLvlMax = 5;
 	}
 	
 	// Update is called once per frame
@@ -33,6 +48,13 @@ public class NPCController : MonoBehaviour {
             
         }*/
         stateMachine.Update();
+
+        if(myExp.exp >= myExp.expLvlMax)
+        {
+            myExp.level++;
+            myExp.exp = 0;
+            myExp.expLvlMax = myExp.level * (myExp.expLvlMax + 1);
+        }
 	}
 
     IEnumerator ObtainJob()

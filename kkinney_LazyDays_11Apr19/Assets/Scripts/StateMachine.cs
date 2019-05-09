@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using UnityEngine;
 
 // Interface structure sourced from:
 // https://forum.unity.com/threads/c-proper-state-machine.380612/ (Unity Forum)
@@ -11,10 +12,13 @@ public interface IState
     void Execute();
     void Exit();
 }
+
+
+
 public class StateMachine
 {
     IState currentState;
-    IState[] pastStates;
+    //IState[] pastStates;
 
     public void ChangeState(IState newState)
     {
@@ -28,8 +32,8 @@ public class StateMachine
         currentState.Enter();
     }
 
-    // Bool return allows to check if it is possible or not
-    public bool revertToPreviousState()
+    /* Bool return allows to check if it is possible or not
+    public bool RevertToPreviousState()
     {
         if (pastStates.Length > 0)
         {
@@ -39,14 +43,14 @@ public class StateMachine
             return true;
         }
         else return false;
-    }
+    }*/
 
-    public IState getCurrentState()
+    public IState GetCurrentState()
     {
         return currentState;
     }
 
-    public bool isInState(IState state)
+    public bool IsInState(IState state)
     {
         if (currentState == state)
         {
