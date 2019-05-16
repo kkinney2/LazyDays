@@ -4,12 +4,24 @@ using UnityEngine;
 
 public class GameController : MonoBehaviour {
 
+    [Header("NPC Settings")]
+    public int Touch_InitialRadius = 3;
+    public int Sight_InitialRadius = 10;
+    [Header("")]
+
+    [Header("Grid Settings")]
+    public Vector2 GridWorldSize;
+    public float NodeRadius;
+    public float Distance;
+
+    [Header("")]
     public GameObject NPC;
     public GameObject PlantBed;
     public GameObject Tree;
     public Camera mainCamera;
+    public LayerMask hitLayers;
 
-    bool canSpawnObj = false;
+    bool canSpawnObj = true;
     bool objSpawned = false;
     GameObject spawnedObj;
     GameObject objToSpawn;
@@ -54,25 +66,39 @@ public class GameController : MonoBehaviour {
             // 'Spawn' object
             //     >> Release Obj from camera if acceptable, else destroy
 
-            Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
-
-            RaycastHit hitInfo;
-
-            if (Physics.Raycast(ray, out hitInfo))
+            if (Input.GetMouseButtonDown(0))
             {
-                Debug.Log("Ray hit: " + hitInfo.collider.gameObject.name);
+                Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
 
-                // TODO: Obj following camera for spawning
-                // Spawn the Obj
-                if (!objSpawned)
+                RaycastHit hitInfo;
+
+                if (Physics.Raycast(ray, out hitInfo, Mathf.Infinity, hitLayers))
                 {
-                    spawnedObj = objToSpawn;
-                    SpawnObj(spawnedObj, hitInfo.point);
-                    objSpawned = true;
+                    Debug.Log("Ray hit: " + hitInfo.collider.gameObject.name);
+
+                    // TODO: Obj following camera for spawning
+                    // Spawn the Obj
+                    if (!objSpawned)
+                    {
+                        spawnedObj = objToSpawn;
+
+                        
+
+                        spawnedObj = SpawnObj(objToSpawn, hitInfo.point);
+
+                        if (spawnedObj.GetComponent<NPCController>())
+                        {
+                            NPCController npc = spawnedObj.GetComponent<NPCController>();
+                            npc.Touch_InitialRadius = Touch_InitialRadius;
+                            npc.Sight_InitialRadius = Sight_InitialRadius;
+                        }
+                        objSpawned = true;
+                    }
                 }
-                else
+
+                if (canSpawnObj)
                 {
-                    spawnedObj.transform.position = hitInfo.point;
+                    objSpawned = false;
                 }
 
                 // Basic Framework for Spawning
@@ -117,9 +143,14 @@ public class GameController : MonoBehaviour {
         }
     }
 
-    void SpawnObj(GameObject obj, Vector3 pos)
+    /*void SpawnObj(GameObject obj, Vector3 pos)
     {
         Instantiate(NPC, pos, Quaternion.identity);
+    }*/
+
+    GameObject SpawnObj(GameObject obj, Vector3 pos)
+    {
+        return Instantiate(NPC, pos, Quaternion.identity);
     }
 
     public void ToggleObjSpawner()

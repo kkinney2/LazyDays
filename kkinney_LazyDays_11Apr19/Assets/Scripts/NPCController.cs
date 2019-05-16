@@ -1,18 +1,40 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class Experience
 {
     public int level;
     public float exp;
     public float expLvlMax;
+    public float expPerTask;
+
+    public void AddExp()
+    {
+        exp += expPerTask;
+    }
+
+    public void AddExp(float a_Exp)
+    {
+        exp += a_Exp;
+    }
 
 }
 
 public class NPCController : MonoBehaviour {
 
+    [Header("NPC Settings")]
+    public int Touch_InitialRadius = 3;
+    public int Sight_InitialRadius = 10;
+    public float ExpPerTask;
+
+    [Header("")]
+
+    public bool isDebugging = false;
     public GameObject GameController;
+    public Slider ExpSlider;
+
     public GameObject JobMenu;
     public Experience myExp;
 
@@ -24,7 +46,8 @@ public class NPCController : MonoBehaviour {
     string newJob;
 
     Pathfinding pathfinder;
-    Grid grid;
+    [HideInInspector]
+    public Grid grid;
     List<Node> pathToTarget;
     bool movingToTarget = false;
     
@@ -48,9 +71,26 @@ public class NPCController : MonoBehaviour {
 
     // Use this for initialization
     void Start () {
+        if(GameController == null)
+        {
+            GameController = GameObject.Find("GameController");
+        }
+
         stateMachine = new StateMachine();
-        pathfinder = GameController.GetComponent<Pathfinding>();
-        grid = GameController.GetComponent<Grid>();
+
+        grid = GameController.AddComponent<Grid>();
+        grid.gridWorldSize = GameController.GetComponent<GameController>().GridWorldSize;
+        grid.nodeRadius = GameController.GetComponent<GameController>().NodeRadius;
+        grid.Distance = GameController.GetComponent<GameController>().Distance;
+
+        pathfinder = this.gameObject.AddComponent<Pathfinding>();
+        pathfinder.GameController = GameController;
+        pathfinder.owner = this;
+        pathfinder.grid = grid;
+        pathfinder.enabled = true;
+
+        
+
         Farmer_Mask = LayerMask.GetMask("Farmer");
         Lumberjack_Mask = LayerMask.GetMask("Lumberjack");
 
@@ -79,23 +119,7 @@ public class NPCController : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-        /* TODO: Commented out due to unfinished work
-        if (stateMachine.getCurrentState() == null)
-        {
-            // Ask user for Job
-            TODO: Unlock mouse or numpad for options
-            Cursor.lockState = CursorLockMode.???;
-            StartCoroutine(ObtainJob());
-            JobMenu.gameObject.SetActive(false);
-            StopCoroutine(ObtainJob());
-
-            if (newJob != null || newJob != "")
-            {
-                // Assign new Job
-                AssignJob(newJob);
-            }
-            
-        }*/
+        
         stateMachine.Update();
 
         if(myExp.exp >= myExp.expLvlMax)
@@ -105,6 +129,9 @@ public class NPCController : MonoBehaviour {
             myExp.expLvlMax = myExp.level * (myExp.expLvlMax + 1);
         }
 
+        ExpSlider.maxValue = myExp.expLvlMax;
+
+        /*
         if (hitColliders_Sight.Length > 0)
         {
             GameObject tempSight;
@@ -113,11 +140,12 @@ public class NPCController : MonoBehaviour {
             {
 
             }
-        }
+        }*/
 
         if (pathToTarget != null && movingToTarget == false)
         {
             movingToTarget = true;
+            isWandering = false;
             StartCoroutine(MoveToTarget());
         }
 	}
@@ -165,11 +193,11 @@ public class NPCController : MonoBehaviour {
         while (true)
         {
             // If object within really close radius, can function individually
-            hitColliders_Touch = Physics.OverlapSphere(transform.position, (myExp.level + 3) * 0.5f, a_Mask);
+            hitColliders_Touch = Physics.OverlapSphere(transform.position, (myExp.level + Touch_InitialRadius) * 0.5f, a_Mask);
             //Debug.Log("touch list length: " + hitColliders_Touch.Length);
 
             // If within 'sight' needs help idenifying
-            hitColliders_Sight = Physics.OverlapSphere(transform.position, (myExp.level + 10) * 0.5f, a_Mask);
+            hitColliders_Sight = Physics.OverlapSphere(transform.position, (myExp.level + Sight_InitialRadius) * 0.5f, a_Mask);
             //Debug.Log("sight list length: " + hitColliders_Sight.Length);
             yield return new WaitForSeconds(0.1f);
         }
@@ -255,26 +283,82 @@ public class NPCController : MonoBehaviour {
         Debug.Log("Finding Path");
         pathfinder.FindPathtoTarget(this.transform, a_Target.transform);
         pathToTarget = grid.FinalPath;
+        
+        /*
         pathfinder.StartPosition = null;
         pathfinder.TargetPosition = null;
-        grid.FinalPath = null;
+        grid.FinalPath = null;*/
     }
 
     IEnumerator MoveToTarget()
     {
-        while (Vector3.Distance(transform.position, pathToTarget[pathToTarget.Count-1].Position) > 0.5f)
+        while (Vector3.Distance(pathToTarget[pathToTarget.Count - 1].Position, transform.position) > 0.5f)
         {
+            if (isDebugging)
+            {
+                for (int i = 0; i < pathToTarget.Count; i++)
+                {
+                    Debug.Log("Node " + i + ": " + pathToTarget[i].Position);
+                }
+                Debug.Log("*****");
+
+                Debug.Log("Path Node Length: " + pathToTarget.Count);
+            }
+            
+
             for (int i = 0; i < pathToTarget.Count; i++)
             {
-                while (Vector3.Distance(transform.position, pathToTarget[i].Position) > 0.5f)
+                Vector3 startPos = transform.position;
+                float journeyLength = Vector3.Distance(pathToTarget[i].Position, transform.position);
+                float t = 0;
+
+                while (Vector3.Distance(pathToTarget[pathToTarget.Count - 1].Position, transform.position) > 0.5f)
                 {
                     float step = Time.deltaTime * moveSpeed;
-                    Vector3.MoveTowards(transform.position, pathToTarget[i].Position, step);
+                    Vector3 newCurrentPos = new Vector3(
+                        transform.position.x * 1,
+                        transform.position.y,
+                        transform.position.z * 1
+                    );
+
+                    Vector3 newTargetPos = new Vector3(
+                        pathToTarget[i].Position.x * 1,
+                        transform.position.y,
+                        pathToTarget[i].Position.z * 1
+                    );
+                    transform.position = Vector3.MoveTowards(newCurrentPos, newTargetPos, step);
+                    //transform.position = Vector3.MoveTowards(transform.position, pathToTarget[i].Position, step);
+                    //transform.position = Vector3.Lerp(startPos, pathToTarget[i].Position, (journeyLength * t) / journeyLength);
+                    //Vector3.Lerp(transform.position, pathToTarget[i].Position, Vector3.Distance(pathToTarget[i].Position, transform.position) * t / journeyLength);
+
+                    if (isDebugging)
+                    {
+                        Debug.Log("MovingTowards: " + newTargetPos);
+                        //Debug.Log("MovingTowards: " + pathToTarget[i].Position);
+                        Debug.Log("MovingTowards Loop: " + i);
+                        Debug.Log("Remaining Distance: " + Vector3.Distance(newCurrentPos, newTargetPos));
+                        //Debug.Log("Remaining Distance: " + Vector3.Distance(transform.position, pathToTarget[i].Position));
+                        //Debug.Log("t: " + t);
+                        Debug.Log("*****");
+                    }
+
+                    
+
+                    if (transform.position == pathToTarget[i].Position)
+                    {
+                        myExp.AddExp();
+                        break;
+                    }
+                    else t = t + 0.5f;
                     yield return new WaitForEndOfFrame();
                 }
                 yield return new WaitForEndOfFrame();
             }
-
+            yield break;
+            if (transform.position == pathToTarget[pathToTarget.Count -1].Position)
+            {
+                yield break;
+            }
             yield return new WaitForSeconds(1);
         }
         movingToTarget = false;

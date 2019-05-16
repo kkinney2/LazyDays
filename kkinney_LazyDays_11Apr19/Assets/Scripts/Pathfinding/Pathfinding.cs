@@ -4,18 +4,43 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class Pathfinding : MonoBehaviour {
-
-    Grid grid;
+    [HideInInspector]
+    public GameObject GameController;
+    public NPCController owner;
+    public Grid grid;
     public Transform StartPosition;
     public Transform TargetPosition;
 
-    private void Awake()
+    /*private void Awake()
     {
-        grid = GetComponent<Grid>();
-    }
+        if (gameObject.name == "GameController")
+        {
+            grid = GetComponent<Grid>();
+        }
+        else grid = GameController.GetComponent<Grid>();
+        //grid = GetComponent<Grid>();
+    }*/
+
+    /*private void Start()
+    {
+        if (gameObject.name == "GameController")
+        {
+            grid = GetComponent<Grid>();
+        }
+        else grid = GameController.GetComponent<Grid>();
+    }*/
 
     private void Update()
     {
+        if (GameController == null)
+        {
+            if (gameObject.name == "GameController")
+            {
+                grid = GetComponent<Grid>();
+            }
+            else grid = owner.grid;
+        }
+
         if (TargetPosition != null)
         {
             FindPath(StartPosition.position, TargetPosition.position);
