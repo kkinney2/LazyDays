@@ -13,6 +13,9 @@ public class Farmer : IState
     bool willHarvest = false;
     bool returnHome = false;
 
+    string targetInteractive = "PlantBed";
+    GameObject currentTarget;
+
     public Farmer(NPCController newOwner)
     {
         this.owner = newOwner;
@@ -28,6 +31,7 @@ public class Farmer : IState
         if (willHarvest || !returnHome)
         {
             // Find PlantBed
+            currentTarget = owner.SearchTargetInteractive(targetInteractive);
             
             // If object within really close radius, can function individually
             Collider[] hitColliders_Close = Physics.OverlapSphere(owner.transform.position, owner.myExp.level * 0.5f);

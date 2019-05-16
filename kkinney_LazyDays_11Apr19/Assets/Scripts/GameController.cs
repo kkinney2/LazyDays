@@ -9,7 +9,7 @@ public class GameController : MonoBehaviour {
     public GameObject Tree;
     public Camera mainCamera;
 
-    bool canSpawnObj = true;
+    bool canSpawnObj = false;
     bool objSpawned = false;
     GameObject spawnedObj;
     GameObject objToSpawn;
