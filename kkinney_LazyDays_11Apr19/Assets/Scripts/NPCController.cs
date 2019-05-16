@@ -313,16 +313,29 @@ public class NPCController : MonoBehaviour {
                 float journeyLength = Vector3.Distance(pathToTarget[i].Position, transform.position);
                 float t = 0;
 
-                while (Vector3.Distance(pathToTarget[pathToTarget.Count - 1].Position, transform.position) > 0.5f)
-                {
-                    float step = Time.deltaTime * moveSpeed;
-                    Vector3 newCurrentPos = new Vector3(
+                Vector3 newCurrentPos = new Vector3(
                         transform.position.x * 1,
                         transform.position.y,
                         transform.position.z * 1
                     );
 
-                    Vector3 newTargetPos = new Vector3(
+                Vector3 newTargetPos = new Vector3(
+                    pathToTarget[i].Position.x * 1,
+                    transform.position.y,
+                    pathToTarget[i].Position.z * 1
+                );
+
+                //while (Vector3.Distance(pathToTarget[pathToTarget.Count - 1].Position, transform.position) > 0.5f) Including a y-axis makes it "impossible" to reach
+                while (Vector3.Distance(newCurrentPos, newTargetPos) > 0.5f)
+                {
+                    float step = Time.deltaTime * moveSpeed;
+                    newCurrentPos = new Vector3(
+                        transform.position.x * 1,
+                        transform.position.y,
+                        transform.position.z * 1
+                    );
+
+                    newTargetPos = new Vector3(
                         pathToTarget[i].Position.x * 1,
                         transform.position.y,
                         pathToTarget[i].Position.z * 1
@@ -349,6 +362,7 @@ public class NPCController : MonoBehaviour {
                     {
                         myExp.AddExp();
                         break;
+                        
                     }
                     else t = t + 0.5f;
                     yield return new WaitForEndOfFrame();

@@ -171,7 +171,7 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1673969362364754}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -32.89, y: 1.42, z: -18.35}
+  m_LocalPosition: {x: -20.76, y: 1.42, z: -6.09}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 224274684794775244}
@@ -458,8 +458,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Touch_InitialRadius: 3
   Sight_InitialRadius: 10
-  ExpPerTask: 0
-  isDebugging: 0
+  ExpPerTask: 5
+  isDebugging: 1
   GameController: {fileID: 0}
   ExpSlider: {fileID: 114718472405397032}
   JobMenu: {fileID: 0}

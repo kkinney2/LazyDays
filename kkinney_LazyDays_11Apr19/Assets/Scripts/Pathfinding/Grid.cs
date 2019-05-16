@@ -109,7 +109,7 @@ public class Grid : MonoBehaviour {
         return NeighboringNodes;
     }
 
-    private void OnDrawGizmos()
+    private void OnDrawGizmosSelected()
     {
         Gizmos.DrawWireCube(transform.position, new Vector3(gridWorldSize.x, 1, gridWorldSize.y));
 
