@@ -38,6 +38,11 @@ public class GameController : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
+        if (Input.GetButton("Cancel"))
+        {
+            Application.Quit();
+        }
+
         if (canSpawnObj)
         {
             // What Obj to spawn

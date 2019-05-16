@@ -27,7 +27,7 @@ public class Grid : MonoBehaviour {
 
     private void CreateGrid()
     {
-        grid = new Node[gridSizeX, gridSizeY];
+        grid = new Node[(int)gridSizeX, (int)gridSizeY];
         Vector3 bottomLeft = transform.position - Vector3.right * gridWorldSize.x / 2f - Vector3.forward * gridWorldSize.y / 2f;
         for (int y = 0; y < gridSizeY; y++)
         {
@@ -108,7 +108,7 @@ public class Grid : MonoBehaviour {
 
         return NeighboringNodes;
     }
-    
+
     private void OnDrawGizmosSelected()
     {
         Gizmos.DrawWireCube(transform.position, new Vector3(gridWorldSize.x, 1, gridWorldSize.y));

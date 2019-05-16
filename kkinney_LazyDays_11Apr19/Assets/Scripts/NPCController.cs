@@ -12,6 +12,7 @@ public class Experience
 
 public class NPCController : MonoBehaviour {
 
+    public GameObject GameController;
     public GameObject JobMenu;
     public Experience myExp;
 
@@ -22,6 +23,12 @@ public class NPCController : MonoBehaviour {
     StateMachine stateMachine;
     string newJob;
 
+    Pathfinding pathfinder;
+    Grid grid;
+    List<Node> pathToTarget;
+    bool movingToTarget = false;
+    
+
     Collider[] hitColliders_Touch;
     Collider[] hitColliders_Sight;
 
@@ -30,16 +37,20 @@ public class NPCController : MonoBehaviour {
     public float rotSpeed = 100f;
     public int maxWalkTime = 5;
     public int maxRotBetweenTime = 4;
-
     private bool isWandering = false;
     private bool isRotatingLeft = false;
     private bool isRotatingRight = false;
     private bool isWalking = false;
 
+    Coroutine wander;
+    Coroutine wanderForces;
+
 
     // Use this for initialization
     void Start () {
         stateMachine = new StateMachine();
+        pathfinder = GameController.GetComponent<Pathfinding>();
+        grid = GameController.GetComponent<Grid>();
         Farmer_Mask = LayerMask.GetMask("Farmer");
         Lumberjack_Mask = LayerMask.GetMask("Lumberjack");
 
@@ -49,6 +60,21 @@ public class NPCController : MonoBehaviour {
             exp = 0,
             expLvlMax = 5
         };
+
+        wander = StartCoroutine(Wander());
+        wanderForces = StartCoroutine(WanderForces());
+
+        AssignJob("Farmer");
+
+        /*
+        if (Random.Range(0,3) >=2)
+        {
+            AssignJob("Farmer");
+        }
+        else
+        {
+            AssignJob("Lumberjack");
+        }*/
     }
 	
 	// Update is called once per frame
@@ -77,6 +103,22 @@ public class NPCController : MonoBehaviour {
             myExp.level++;
             myExp.exp = 0;
             myExp.expLvlMax = myExp.level * (myExp.expLvlMax + 1);
+        }
+
+        if (hitColliders_Sight.Length > 0)
+        {
+            GameObject tempSight;
+            GameObject tempTouch;
+            if (hitColliders_Touch.Length > 0)
+            {
+
+            }
+        }
+
+        if (pathToTarget != null && movingToTarget == false)
+        {
+            movingToTarget = true;
+            StartCoroutine(MoveToTarget());
         }
 	}
 
@@ -123,15 +165,17 @@ public class NPCController : MonoBehaviour {
         while (true)
         {
             // If object within really close radius, can function individually
-            hitColliders_Touch = Physics.OverlapSphere(transform.position, myExp.level * 0.5f, a_Mask);
+            hitColliders_Touch = Physics.OverlapSphere(transform.position, (myExp.level + 3) * 0.5f, a_Mask);
+            //Debug.Log("touch list length: " + hitColliders_Touch.Length);
 
             // If within 'sight' needs help idenifying
-            hitColliders_Sight = Physics.OverlapSphere(transform.position, myExp.level * 0.5f, a_Mask);
-
-            yield return new WaitForSeconds(1);
+            hitColliders_Sight = Physics.OverlapSphere(transform.position, (myExp.level + 10) * 0.5f, a_Mask);
+            //Debug.Log("sight list length: " + hitColliders_Sight.Length);
+            yield return new WaitForSeconds(0.1f);
         }
 
     }
+
 
     public GameObject SearchTargetInteractive(string a_Tag)
     {
@@ -141,10 +185,17 @@ public class NPCController : MonoBehaviour {
             tempTarget = ClosestObjSight(a_Tag);
             if (tempTarget == null)
             {
-                Debug.Log("Cannot Find: " + a_Tag);
+                //Debug.Log("Cannot Find: " + a_Tag);
+                isWandering = true;
             }
         }
-        return tempTarget;
+        if (tempTarget != null)
+        {
+            //Debug.Log("Found: " + tempTarget.name);
+            isWandering = false;
+            return tempTarget;
+        }
+        return null;
     }
 
     public GameObject ClosestObjTouch(string a_Tag)
@@ -167,7 +218,7 @@ public class NPCController : MonoBehaviour {
 
         if (closestObj == null)
         {
-            Debug.Log("No Object within Touch with Tag: " + a_Tag);
+            //Debug.Log("No Object within Touch with Tag: " + a_Tag);
         }
 
         return closestObj;
@@ -193,64 +244,104 @@ public class NPCController : MonoBehaviour {
 
         if (closestObj == null)
         {
-            Debug.Log("No Object within Sight with Tag: " + a_Tag);
+            //Debug.Log("No Object within Sight with Tag: " + a_Tag);
         }
 
         return closestObj;
     }
 
+    public void FindPath(GameObject a_Target)
+    {
+        Debug.Log("Finding Path");
+        pathfinder.FindPathtoTarget(this.transform, a_Target.transform);
+        pathToTarget = grid.FinalPath;
+        pathfinder.StartPosition = null;
+        pathfinder.TargetPosition = null;
+        grid.FinalPath = null;
+    }
+
+    IEnumerator MoveToTarget()
+    {
+        while (Vector3.Distance(transform.position, pathToTarget[pathToTarget.Count-1].Position) > 0.5f)
+        {
+            for (int i = 0; i < pathToTarget.Count; i++)
+            {
+                while (Vector3.Distance(transform.position, pathToTarget[i].Position) > 0.5f)
+                {
+                    float step = Time.deltaTime * moveSpeed;
+                    Vector3.MoveTowards(transform.position, pathToTarget[i].Position, step);
+                    yield return new WaitForEndOfFrame();
+                }
+                yield return new WaitForEndOfFrame();
+            }
+
+            yield return new WaitForSeconds(1);
+        }
+        movingToTarget = false;
+        pathToTarget = null;
+    }
+
     IEnumerator Wander()
     {
-        int rotTime = Random.Range(1, 3); // Amount of time rotating
-        int rotateWeight = Random.Range(1, maxRotBetweenTime; // Time inbetween rotations
-        int rotateLorR = Random.Range(1, 2); // Left or Right
-        int walkWeight = Random.Range(1, 4); // Time inbetween Walking
-        int walkTime = Random.Range(1, maxWalkTime); // Walking Time
-
-        isWandering = true;
-
-        yield return new WaitForSeconds(walkWeight);
-        isWalking = true;
-
-        yield return new WaitForSeconds(walkTime);
-        isWalking = false;
-
-        yield return new WaitForSeconds(rotateWeight);
-        if (rotateLorR == 1)
+        while (true)
         {
-            isRotatingRight = true;
-            yield return new WaitForSeconds(rotTime);
-            isRotatingRight = false;
+            while (isWandering)
+            {
+                Debug.Log("IsWandering");
+                int rotTime = Random.Range(1, 3); // Amount of time rotating
+                int rotateWeight = Random.Range(1, maxRotBetweenTime); // Time inbetween rotations
+                int rotateLorR = Random.Range(0, 3); // Left or Right
+                int walkWeight = Random.Range(1, 4); // Time inbetween Walking
+                int walkTime = Random.Range(1, maxWalkTime); // Walking Time
+
+                yield return new WaitForSeconds(walkWeight);
+                isWalking = true;
+
+                yield return new WaitForSeconds(walkTime);
+                isWalking = false;
+
+                yield return new WaitForSeconds(rotateWeight);
+                if (rotateLorR == 1)
+                {
+                    isRotatingRight = true;
+                    yield return new WaitForSeconds(rotTime);
+                    isRotatingRight = false;
+                }
+                if (rotateLorR == 2)
+                {
+                    isRotatingLeft = true;
+                    yield return new WaitForSeconds(rotTime);
+                    isRotatingLeft = false;
+                }
+                yield return new WaitForEndOfFrame();
+            }
+
+            yield return new WaitForEndOfFrame();
         }
-        if (rotateLorR == 2)
-        {
-            isRotatingLeft = true;
-            yield return new WaitForSeconds(rotTime);
-            isRotatingLeft = false;
-        }
-        isWandering = false;
     }
 
     IEnumerator WanderForces()
     {
         while (true)
         {
-            if (isWandering == false)
+            while (isWandering)
             {
-                yield break;
+                if (isRotatingRight)
+                {
+                    transform.Rotate(transform.up * Time.deltaTime * rotSpeed);
+                }
+                if (isRotatingLeft)
+                {
+                    transform.Rotate(transform.up * Time.deltaTime * -rotSpeed);
+                }
+                if (isWalking)
+                {
+                    transform.position += transform.forward * moveSpeed * Time.deltaTime;
+                }
+
+                yield return new WaitForEndOfFrame();
             }
-            if (isRotatingRight)
-            {
-                transform.Rotate(transform.up * Time.deltaTime * rotSpeed);
-            }
-            if (isRotatingLeft)
-            {
-                transform.Rotate(transform.up * Time.deltaTime * -rotSpeed);
-            }
-            if (isWalking)
-            {
-                transform.position += transform.forward * moveSpeed * Time.deltaTime;
-            }
+            yield return new WaitForEndOfFrame();
         }
     }
 }

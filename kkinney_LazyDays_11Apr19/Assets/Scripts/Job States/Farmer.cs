@@ -32,12 +32,11 @@ public class Farmer : IState
         {
             // Find PlantBed
             currentTarget = owner.SearchTargetInteractive(targetInteractive);
-            
-            // If object within really close radius, can function individually
-            Collider[] hitColliders_Close = Physics.OverlapSphere(owner.transform.position, owner.myExp.level * 0.5f);
-
-            // If within 'sight' needs help idenifying
-            Collider[] hitColliders_Sight = Physics.OverlapSphere(owner.transform.position, owner.myExp.level * 0.5f);
+            if (currentTarget != null && !willHarvest)
+            {
+                willHarvest = true;
+                owner.FindPath(currentTarget);
+            }
         }
 
 
