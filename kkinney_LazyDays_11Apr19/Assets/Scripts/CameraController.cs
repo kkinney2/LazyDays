@@ -7,7 +7,7 @@ public class CameraController : MonoBehaviour {
     public float MouseSensitivity = 0.5f;
     public float RotAcc = 0.12f;
     public float CamSpeed = 5.0f;
-    public float CamSpeedMultiplier = 50f;
+    public float CamSpeedMultiplier = 3f;
     public Vector2 pitchMinMax = new Vector2(-30, 85);
     public bool InvertPitch = false;
     
@@ -93,6 +93,7 @@ public class CameraController : MonoBehaviour {
         
         moveDir = transform.TransformDirection(moveDir);
         rb.transform.position = transform.position + moveDir * Time.deltaTime;
+
     }
 
     void Rotation()

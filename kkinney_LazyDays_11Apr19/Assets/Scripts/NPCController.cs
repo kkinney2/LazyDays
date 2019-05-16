@@ -129,6 +129,7 @@ public class NPCController : MonoBehaviour {
             myExp.expLvlMax = myExp.level * (myExp.expLvlMax + 1);
         }
 
+        ExpSlider.value = myExp.exp;
         ExpSlider.maxValue = myExp.expLvlMax;
 
         /*
@@ -354,6 +355,7 @@ public class NPCController : MonoBehaviour {
                 }
                 yield return new WaitForEndOfFrame();
             }
+            Debug.Log("Reached Target");
             yield break;
             if (transform.position == pathToTarget[pathToTarget.Count -1].Position)
             {
