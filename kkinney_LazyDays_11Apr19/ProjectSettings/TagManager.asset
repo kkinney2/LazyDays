@@ -6,6 +6,7 @@ TagManager:
   tags:
   - PlantBed
   - NPC
+  - Home
   layers:
   - Default
   - TransparentFX
@@ -18,9 +19,9 @@ TagManager:
   - PostProcessing
   - Wall
   - Player
-  - Farmer
+  - NPC
   - Lumberjack
-  - 
+  - Farmer
   - 
   - 
   - 

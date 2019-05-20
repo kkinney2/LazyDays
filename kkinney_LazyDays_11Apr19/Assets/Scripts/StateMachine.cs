@@ -7,10 +7,14 @@ using UnityEngine;
 // https://github.com/libgdx/gdx-ai/wiki/State-Machine (Mat Buckland)
 
 public interface IState
-{
+{ 
     void Enter();
     void Execute();
     void Exit();
+
+    string GetTaskTarget();
+    int GetTaskDuration(string str);
+    void PerformTask(string str, GameObject obj);
 }
 
 
@@ -19,6 +23,8 @@ public class StateMachine
 {
     IState currentState;
     //IState[] pastStates;
+
+    string targetInteractive;
 
     public void ChangeState(IState newState)
     {
@@ -63,5 +69,21 @@ public class StateMachine
     {
         if (currentState != null) currentState.Execute();
     }
+
+    public string GetTaskTarget()
+    {
+        return currentState.GetTaskTarget();
+    }
+
+    public int GetTaskDuration(string a_location)
+    {
+        return currentState.GetTaskDuration(a_location);
+    }
+
+    public void PerformTask(string a_location, GameObject a_target)
+    {
+        currentState.PerformTask(a_location, a_target);
+    }
+
 }
 

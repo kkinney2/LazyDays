@@ -25,15 +25,24 @@ public class Experience
 public class NPCController : MonoBehaviour {
 
     [Header("NPC Settings")]
-    public int Touch_InitialRadius = 3;
-    public int Sight_InitialRadius = 10;
+    public GameObject Home;
+    public int Sight_InitialRadius = 3;
     public float ExpPerTask;
+    public bool isDebugging = false;
+    
+    GameObject GameController;
+    [HideInInspector]
+    public GameController gameController;
 
     [Header("")]
 
-    public bool isDebugging = false;
-    public GameObject GameController;
+    [Header("Canvas References")]
+    public GameObject Canvas;
     public Slider ExpSlider;
+    public Text levelText;
+    public Text ActionText;
+    
+    [Header("")]
 
     public GameObject JobMenu;
     public Experience myExp;
@@ -50,9 +59,19 @@ public class NPCController : MonoBehaviour {
     public Grid grid;
     List<Node> pathToTarget;
     bool movingToTarget = false;
-    
+    Coroutine MovingTowardsTarget;
 
-    Collider[] hitColliders_Touch;
+    [HideInInspector]
+    public Renderer rend;
+
+    public bool isHome = false;
+    bool performingTask = false;
+    bool returnHome = false;
+
+    int timeAtLocation = 0;
+
+    GameObject currentTarget;
+
     Collider[] hitColliders_Sight;
 
     [Header("Wandering Settings")]
@@ -74,14 +93,17 @@ public class NPCController : MonoBehaviour {
         if(GameController == null)
         {
             GameController = GameObject.Find("GameController");
+            gameController = GameController.GetComponent<GameController>();
         }
 
         stateMachine = new StateMachine();
 
         grid = GameController.AddComponent<Grid>();
-        grid.gridWorldSize = GameController.GetComponent<GameController>().GridWorldSize;
-        grid.nodeRadius = GameController.GetComponent<GameController>().NodeRadius;
-        grid.Distance = GameController.GetComponent<GameController>().Distance;
+        grid.gridWorldSize = gameController.GridWorldSize;
+        grid.nodeRadius = gameController.NodeRadius;
+        grid.Distance = gameController.Distance;
+        grid.WallMask = LayerMask.GetMask("Wall");
+        grid.DrawGrid = gameController.DrawGridOnSelected;
 
         pathfinder = this.gameObject.AddComponent<Pathfinding>();
         pathfinder.GameController = GameController;
@@ -89,8 +111,8 @@ public class NPCController : MonoBehaviour {
         pathfinder.grid = grid;
         pathfinder.enabled = true;
 
-        
 
+        rend = GetComponent<Renderer>();
         Farmer_Mask = LayerMask.GetMask("Farmer");
         Lumberjack_Mask = LayerMask.GetMask("Lumberjack");
 
@@ -98,13 +120,21 @@ public class NPCController : MonoBehaviour {
         {
             level = 1,
             exp = 0,
-            expLvlMax = 5
+            expLvlMax = 5,
+            expPerTask = gameController.ExpPerTask
         };
+
+        UpdateExpUI();
+
+        Canvas.gameObject.SetActive(false);
+
 
         wander = StartCoroutine(Wander());
         wanderForces = StartCoroutine(WanderForces());
 
         AssignJob("Farmer");
+
+        StartCoroutine(TaskChecker());
 
         /*
         if (Random.Range(0,3) >=2)
@@ -122,34 +152,16 @@ public class NPCController : MonoBehaviour {
         
         stateMachine.Update();
 
-        if(myExp.exp >= myExp.expLvlMax)
+        if (myExp.exp >= myExp.expLvlMax)
         {
             myExp.level++;
-            myExp.exp = 0;
+            myExp.exp = myExp.exp - myExp.expLvlMax;
             myExp.expLvlMax = myExp.level * (myExp.expLvlMax + 1);
+
+            UpdateExpUI();
         }
 
-        ExpSlider.value = myExp.exp;
-        ExpSlider.maxValue = myExp.expLvlMax;
-
-        /*
-        if (hitColliders_Sight.Length > 0)
-        {
-            GameObject tempSight;
-            GameObject tempTouch;
-            if (hitColliders_Touch.Length > 0)
-            {
-
-            }
-        }*/
-
-        if (pathToTarget != null && movingToTarget == false)
-        {
-            movingToTarget = true;
-            isWandering = false;
-            StartCoroutine(MoveToTarget());
-        }
-	}
+    }
 
     IEnumerator ObtainJob()
     {
@@ -173,10 +185,10 @@ public class NPCController : MonoBehaviour {
 
         switch (state)
         {
-            case "LumberJack":
+            /*case "LumberJack":
                 stateMachine.ChangeState(new Lumberjack(this));
                 StartCoroutine(Search(Lumberjack_Mask));
-                break;
+                break;*/
 
             case "Farmer":
                 stateMachine.ChangeState(new Farmer(this));
@@ -193,30 +205,22 @@ public class NPCController : MonoBehaviour {
     {
         while (true)
         {
-            // If object within really close radius, can function individually
-            hitColliders_Touch = Physics.OverlapSphere(transform.position, (myExp.level + Touch_InitialRadius) * 0.5f, a_Mask);
-            //Debug.Log("touch list length: " + hitColliders_Touch.Length);
+            hitColliders_Sight = null;
 
             // If within 'sight' needs help idenifying
             hitColliders_Sight = Physics.OverlapSphere(transform.position, (myExp.level + Sight_InitialRadius) * 0.5f, a_Mask);
-            //Debug.Log("sight list length: " + hitColliders_Sight.Length);
+            //Debug.Log("Sight list length: " + hitColliders_Sight.Length);
             yield return new WaitForSeconds(0.1f);
         }
 
     }
 
-
-    public GameObject SearchTargetInteractive(string a_Tag)
+    public GameObject SearchForTarget(string a_Tag)
     {
-        GameObject tempTarget = ClosestObjTouch(a_Tag);
+        GameObject tempTarget = ClosestObjSight(a_Tag);
         if (tempTarget == null)
         {
-            tempTarget = ClosestObjSight(a_Tag);
-            if (tempTarget == null)
-            {
-                //Debug.Log("Cannot Find: " + a_Tag);
-                isWandering = true;
-            }
+            isWandering = true;
         }
         if (tempTarget != null)
         {
@@ -225,32 +229,6 @@ public class NPCController : MonoBehaviour {
             return tempTarget;
         }
         return null;
-    }
-
-    public GameObject ClosestObjTouch(string a_Tag)
-    {
-        float shortestDistance = -1;
-        GameObject closestObj = null;
-
-        foreach (Collider collider in hitColliders_Touch)
-        {
-            if (collider.gameObject.CompareTag(a_Tag))
-            {
-                float tempDist = Vector3.Distance(collider.gameObject.transform.position, transform.position);
-                if (tempDist < shortestDistance || shortestDistance == -1)
-                {
-                    shortestDistance = tempDist;
-                    closestObj = collider.gameObject;
-                }
-            }
-        }
-
-        if (closestObj == null)
-        {
-            //Debug.Log("No Object within Touch with Tag: " + a_Tag);
-        }
-
-        return closestObj;
     }
 
     public GameObject ClosestObjSight(string a_Tag)
@@ -262,12 +240,23 @@ public class NPCController : MonoBehaviour {
         {
             if (collider.gameObject.CompareTag(a_Tag))
             {
-                float tempDist = Vector3.Distance(collider.gameObject.transform.position, transform.position);
-                if (tempDist < shortestDistance || shortestDistance == -1)
+                if (a_Tag == "Home")
                 {
-                    shortestDistance = tempDist;
-                    closestObj = collider.gameObject;
+                    if (collider.gameObject == Home)
+                    {
+                        return Home;
+                    }
                 }
+                else
+                {
+                    float tempDist = Vector3.Distance(collider.gameObject.transform.position, transform.position);
+                    if (tempDist < shortestDistance || shortestDistance == -1)
+                    {
+                        shortestDistance = tempDist;
+                        closestObj = collider.gameObject;
+                    }
+                }
+                
             }
         }
 
@@ -291,8 +280,112 @@ public class NPCController : MonoBehaviour {
         grid.FinalPath = null;*/
     }
 
+    public string GetTaskTarget()
+    {
+        return stateMachine.GetTaskTarget();
+    }
+
+    public void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject == currentTarget)
+        {
+            HasReachedTarget();
+        }
+    }
+
+    public void HasReachedTarget()
+    {
+        Debug.Log("HasReachedTarget()");
+        timeAtLocation = 0;
+
+        if (returnHome)
+        {
+            Debug.Log("Received exp");
+            myExp.AddExp();
+            UpdateExpUI();
+            returnHome = false;
+        }
+        else returnHome = true;
+
+        movingToTarget = false;
+        currentTarget = null;
+        pathToTarget = null;
+        StopCoroutine(MovingTowardsTarget);
+    }
+
+    private void OnMouseEnter()
+    {
+        Canvas.gameObject.SetActive(true);
+    }
+
+    private void OnMouseExit()
+    {
+        Canvas.gameObject.SetActive(false);
+    }
+
+    void UpdateExpUI()
+    {
+        levelText.text = myExp.level.ToString();
+        ExpSlider.value = myExp.exp;
+        ExpSlider.maxValue = myExp.expLvlMax;
+    }
+
+    IEnumerator TaskChecker()
+    {
+        while (true)
+        {
+            if (returnHome && !performingTask)
+            {
+                //Debug.Log("Looking for Home");
+                ActionText.text = "Looking for Home";
+                currentTarget = SearchForTarget("Home");
+                if (currentTarget != null)
+                {
+                    Debug.Log("Found Home");
+                    performingTask = true;
+                    FindPath(currentTarget);
+                }
+            }
+
+            if (!returnHome && !performingTask)
+            {
+                // Find PlantBed
+                //Debug.Log("Looking for Task: " + GetTaskTarget());
+                ActionText.text = "Looking for " + stateMachine.GetTaskTarget();
+                currentTarget = SearchForTarget(GetTaskTarget());
+                if (currentTarget != null)
+                {
+                    performingTask = true;
+                    Debug.Log("Found Task: " + GetTaskTarget());
+                    FindPath(currentTarget);
+                }
+            }
+
+            if (pathToTarget != null && movingToTarget == false)
+            {
+                movingToTarget = true;
+                isWandering = false;
+                MovingTowardsTarget = StartCoroutine(MoveToTarget());
+            }
+
+            yield return new WaitForSeconds(1);
+        }
+    }
+
+    IEnumerator PerformTask(string location, GameObject a_target)
+    {
+        int waitTime = 0;
+
+        stateMachine.PerformTask(location, a_target);
+        waitTime += stateMachine.GetTaskDuration(location);
+        
+        yield return new WaitForSeconds(waitTime);
+        performingTask = false;
+    }
+
     IEnumerator MoveToTarget()
     {
+        Debug.Log("MovingToTarget()");
         while (Vector3.Distance(pathToTarget[pathToTarget.Count - 1].Position, transform.position) > 0.5f)
         {
             if (isDebugging)
@@ -341,9 +434,6 @@ public class NPCController : MonoBehaviour {
                         pathToTarget[i].Position.z * 1
                     );
                     transform.position = Vector3.MoveTowards(newCurrentPos, newTargetPos, step);
-                    //transform.position = Vector3.MoveTowards(transform.position, pathToTarget[i].Position, step);
-                    //transform.position = Vector3.Lerp(startPos, pathToTarget[i].Position, (journeyLength * t) / journeyLength);
-                    //Vector3.Lerp(transform.position, pathToTarget[i].Position, Vector3.Distance(pathToTarget[i].Position, transform.position) * t / journeyLength);
 
                     if (isDebugging)
                     {
@@ -356,23 +446,14 @@ public class NPCController : MonoBehaviour {
                         Debug.Log("*****");
                     }
 
-                    
-
-                    if (transform.position == pathToTarget[i].Position)
-                    {
-                        myExp.AddExp();
-                        break;
-                        
-                    }
-                    else t = t + 0.5f;
                     yield return new WaitForEndOfFrame();
                 }
                 yield return new WaitForEndOfFrame();
             }
             Debug.Log("Reached Target");
-            yield break;
             if (transform.position == pathToTarget[pathToTarget.Count -1].Position)
             {
+                HasReachedTarget();
                 yield break;
             }
             yield return new WaitForSeconds(1);
@@ -387,18 +468,16 @@ public class NPCController : MonoBehaviour {
         {
             while (isWandering)
             {
-                Debug.Log("IsWandering");
+                if (isDebugging)
+                {
+                    Debug.Log("IsWandering");
+                }
+                
                 int rotTime = Random.Range(1, 3); // Amount of time rotating
                 int rotateWeight = Random.Range(1, maxRotBetweenTime); // Time inbetween rotations
                 int rotateLorR = Random.Range(0, 3); // Left or Right
                 int walkWeight = Random.Range(1, 4); // Time inbetween Walking
                 int walkTime = Random.Range(1, maxWalkTime); // Walking Time
-
-                yield return new WaitForSeconds(walkWeight);
-                isWalking = true;
-
-                yield return new WaitForSeconds(walkTime);
-                isWalking = false;
 
                 yield return new WaitForSeconds(rotateWeight);
                 if (rotateLorR == 1)
@@ -413,6 +492,13 @@ public class NPCController : MonoBehaviour {
                     yield return new WaitForSeconds(rotTime);
                     isRotatingLeft = false;
                 }
+
+                yield return new WaitForSeconds(walkWeight);
+                isWalking = true;
+
+                yield return new WaitForSeconds(walkTime);
+                isWalking = false;
+                
                 yield return new WaitForEndOfFrame();
             }
 

@@ -10,11 +10,10 @@ public class Farmer : IState
 {
     NPCController owner;
 
-    bool willHarvest = false;
-    bool returnHome = false;
-
-    string targetInteractive = "PlantBed";
-    GameObject currentTarget;
+    string taskTarget = "PlantBed";
+    bool hasFood = false;
+    int foodCarryingNum = 0;
+    int taskDuration = 2;
 
     public Farmer(NPCController newOwner)
     {
@@ -24,36 +23,19 @@ public class Farmer : IState
     public void Enter()
     {
         Debug.Log("Entering State: Farmer");
+        owner.rend.material.shader = Shader.Find("_Color");
+        owner.rend.material.SetColor("_Color", Color.magenta);
+
+        owner.rend.material.shader = Shader.Find("Specular");
+        owner.rend.material.SetColor("_SpecColor", Color.red);
     }
 
     public void Execute()
-    {
-        if (willHarvest || !returnHome)
+    {/*
+        if (hasFood && owner.)
         {
-            // Find PlantBed
-            currentTarget = owner.SearchTargetInteractive(targetInteractive);
-            if (currentTarget != null && !willHarvest)
-            {
-                willHarvest = true;
-                owner.FindPath(currentTarget);
-            }
-        }
 
-
-        // Do what?
-        //      Harvest();
-        //      ReturnHome();
-
-
-        // How to do it?
-        //      Find(PlantBed); GoTo(PlantBed);
-        //      GoTo(Home);
-
-        // Perform it
-        //      Harvest();
-
-        // Now what?
-        //      FindNewTask();
+        }*/
     }
 
     public void Exit()
@@ -61,10 +43,36 @@ public class Farmer : IState
         Debug.Log("Exiting State: Farmer");
     }
 
-    IEnumerator ObjDetectSphere()
+    public string GetTaskTarget()
     {
-
-        yield return new WaitForSeconds(1);
+        return taskTarget;
     }
 
+    public int GetTaskDuration(string a_task)
+    {
+
+        if (a_task == "Home")
+        {
+            taskDuration = 1;
+        }
+
+        if (a_task == "Task")
+        {
+            taskDuration = 2;
+        }
+        return taskDuration;
+    }
+
+    public void PerformTask(string a_location, GameObject a_target)
+    {
+        if (a_location == "Home")
+        {
+            a_target.GetComponent<TaskBehavior>().CanPerformTask();
+        }
+
+        if (a_location == "Task")
+        {
+            a_target.GetComponent<TaskBehavior>();
+        }
+    }
 }

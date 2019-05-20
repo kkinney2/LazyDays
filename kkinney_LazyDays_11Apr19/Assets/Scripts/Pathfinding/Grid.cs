@@ -11,6 +11,8 @@ public class Grid : MonoBehaviour {
     public float nodeRadius;
     public float Distance;
 
+    public bool DrawGrid = false;
+
     Node[,] grid;
     public List<Node> FinalPath;
 
@@ -111,32 +113,36 @@ public class Grid : MonoBehaviour {
 
     private void OnDrawGizmosSelected()
     {
-        Gizmos.DrawWireCube(transform.position, new Vector3(gridWorldSize.x, 1, gridWorldSize.y));
-
-        if (grid != null)
+        if (DrawGrid)
         {
-            foreach (Node n in grid)
+            Gizmos.DrawWireCube(transform.position, new Vector3(gridWorldSize.x, 1, gridWorldSize.y));
+
+            if (grid != null)
             {
-                if (n.IsWall)
+                foreach (Node n in grid)
                 {
-                    Gizmos.color = Color.white;
-                }
-                else
-                {
-                    Gizmos.color = Color.yellow;
-                }
-
-
-                if (FinalPath != null)
-                {
-                    if (FinalPath.Contains(n))
+                    if (n.IsWall)
                     {
-                        Gizmos.color = Color.red;
+                        Gizmos.color = Color.white;
                     }
-                }
+                    else
+                    {
+                        Gizmos.color = Color.yellow;
+                    }
 
-                Gizmos.DrawCube(n.Position, Vector3.one * (nodeDiameter - Distance));
+
+                    if (FinalPath != null)
+                    {
+                        if (FinalPath.Contains(n))
+                        {
+                            Gizmos.color = Color.red;
+                        }
+                    }
+
+                    Gizmos.DrawCube(n.Position, Vector3.one * (nodeDiameter - Distance));
+                }
             }
         }
+        
     }
 }

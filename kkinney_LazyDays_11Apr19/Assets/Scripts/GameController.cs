@@ -1,18 +1,22 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class GameController : MonoBehaviour {
 
     [Header("NPC Settings")]
-    public int Touch_InitialRadius = 3;
     public int Sight_InitialRadius = 10;
+    public float ExpPerTask;
+
     [Header("")]
 
     [Header("Grid Settings")]
     public Vector2 GridWorldSize;
     public float NodeRadius;
     public float Distance;
+    public bool DrawGridOnSelected;
 
     [Header("")]
     public GameObject NPC;
@@ -20,6 +24,8 @@ public class GameController : MonoBehaviour {
     public GameObject Tree;
     public Camera mainCamera;
     public LayerMask hitLayers;
+    public int FoodCount;
+    public Text FoodCountUI;
 
     bool canSpawnObj = true;
     bool objSpawned = false;
@@ -50,9 +56,15 @@ public class GameController : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
+
         if (Input.GetButton("Cancel"))
         {
             Application.Quit();
+        }
+
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
         }
 
         if (canSpawnObj)
@@ -89,7 +101,6 @@ public class GameController : MonoBehaviour {
                         if (spawnedObj.GetComponent<NPCController>())
                         {
                             NPCController npc = spawnedObj.GetComponent<NPCController>();
-                            npc.Touch_InitialRadius = Touch_InitialRadius;
                             npc.Sight_InitialRadius = Sight_InitialRadius;
                         }
                         objSpawned = true;
@@ -156,5 +167,15 @@ public class GameController : MonoBehaviour {
     public void ToggleObjSpawner()
     {
         canSpawnObj = !canSpawnObj;
+    }
+
+    public void AddFood(int new_Value)
+    {
+        FoodCount = FoodCount + new_Value;
+    }
+
+    public void UpdateUI()
+    {
+        FoodCountUI.text = FoodCount.ToString();
     }
 }
