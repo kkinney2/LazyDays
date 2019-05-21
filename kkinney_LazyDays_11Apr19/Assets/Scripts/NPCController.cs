@@ -27,8 +27,10 @@ public class NPCController : MonoBehaviour {
     [Header("NPC Settings")]
     public GameObject Home;
     public int Sight_InitialRadius = 3;
+    public int Level = 1;
     public float ExpPerTask;
     public bool isDebugging = false;
+    public GameObject Radius_UI;
     
     GameObject GameController;
     [HideInInspector]
@@ -56,7 +58,7 @@ public class NPCController : MonoBehaviour {
 
     Pathfinding pathfinder;
     [HideInInspector]
-    public Grid grid;
+    Grid grid;
     List<Node> pathToTarget;
     bool movingToTarget = false;
     Coroutine MovingTowardsTarget;
@@ -90,22 +92,19 @@ public class NPCController : MonoBehaviour {
 
     // Use this for initialization
     void Start () {
-        if(GameController == null)
-        {
-            GameController = GameObject.Find("GameController");
-            gameController = GameController.GetComponent<GameController>();
-        }
+        GameController = GameObject.Find("GameController");
+        gameController = GameController.GetComponent<GameController>();
 
         stateMachine = new StateMachine();
 
-        grid = GameController.AddComponent<Grid>();
+        grid = GameController.GetComponent<Grid>(); // Adding the component gives a reference error
         grid.gridWorldSize = gameController.GridWorldSize;
         grid.nodeRadius = gameController.NodeRadius;
         grid.Distance = gameController.Distance;
         grid.WallMask = LayerMask.GetMask("Wall");
         grid.DrawGrid = gameController.DrawGridOnSelected;
 
-        pathfinder = this.gameObject.AddComponent<Pathfinding>();
+        pathfinder = gameObject.AddComponent<Pathfinding>();
         pathfinder.GameController = GameController;
         pathfinder.owner = this;
         pathfinder.grid = grid;
@@ -118,7 +117,7 @@ public class NPCController : MonoBehaviour {
 
         myExp = new Experience
         {
-            level = 1,
+            level = Level,
             exp = 0,
             expLvlMax = 5,
             expPerTask = gameController.ExpPerTask
@@ -160,6 +159,8 @@ public class NPCController : MonoBehaviour {
 
             UpdateExpUI();
         }
+
+        Radius_UI.transform.localScale = new Vector3(Sight_InitialRadius * Level * 0.5f, 0.001f, Sight_InitialRadius * Level * 0.5f);
 
     }
 
@@ -208,7 +209,7 @@ public class NPCController : MonoBehaviour {
             hitColliders_Sight = null;
 
             // If within 'sight' needs help idenifying
-            hitColliders_Sight = Physics.OverlapSphere(transform.position, (myExp.level + Sight_InitialRadius) * 0.5f, a_Mask);
+            hitColliders_Sight = Physics.OverlapSphere(transform.position, (myExp.level * Sight_InitialRadius) * 0.5f, a_Mask);
             //Debug.Log("Sight list length: " + hitColliders_Sight.Length);
             yield return new WaitForSeconds(0.1f);
         }
@@ -218,6 +219,7 @@ public class NPCController : MonoBehaviour {
     public GameObject SearchForTarget(string a_Tag)
     {
         GameObject tempTarget = ClosestObjSight(a_Tag);
+
         if (tempTarget == null)
         {
             isWandering = true;
@@ -238,25 +240,21 @@ public class NPCController : MonoBehaviour {
 
         foreach (Collider collider in hitColliders_Sight)
         {
-            if (collider.gameObject.CompareTag(a_Tag))
-            {
-                if (a_Tag == "Home")
-                {
-                    if (collider.gameObject == Home)
-                    {
-                        return Home;
-                    }
-                }
-                else
-                {
-                    float tempDist = Vector3.Distance(collider.gameObject.transform.position, transform.position);
-                    if (tempDist < shortestDistance || shortestDistance == -1)
-                    {
-                        shortestDistance = tempDist;
-                        closestObj = collider.gameObject;
-                    }
-                }
                 
+            if (collider.gameObject.CompareTag(a_Tag) && collider.gameObject.GetComponent<TaskBehavior>().CanPerformTask())
+            {
+
+                /*if (collider.gameObject == Home)
+                {
+                    return Home;
+                }*/
+
+                float tempDist = Vector3.Distance(collider.gameObject.transform.position, transform.position);
+                if (tempDist < shortestDistance || shortestDistance == -1)
+                {
+                    shortestDistance = tempDist;
+                    closestObj = collider.gameObject;
+                }    
             }
         }
 
@@ -268,34 +266,29 @@ public class NPCController : MonoBehaviour {
         return closestObj;
     }
 
-    public void FindPath(GameObject a_Target)
+    private void FindPath(GameObject a_Target)
     {
-        Debug.Log("Finding Path");
-        pathfinder.FindPathtoTarget(this.transform, a_Target.transform);
-        pathToTarget = grid.FinalPath;
-        
-        /*
-        pathfinder.StartPosition = null;
-        pathfinder.TargetPosition = null;
-        grid.FinalPath = null;*/
-    }
+        grid.FinalPath = null;
 
-    public string GetTaskTarget()
-    {
-        return stateMachine.GetTaskTarget();
+        //Debug.Log("Finding Path to: " + a_Target);
+        ActionText.text = "Finding Path to " + a_Target.name;
+        pathfinder.FindPathtoTarget(gameObject.transform.position, a_Target.transform.position);
+        pathToTarget = grid.FinalPath;
+
     }
 
     public void OnCollisionEnter(Collision collision)
     {
         if (collision.gameObject == currentTarget)
         {
-            HasReachedTarget();
+            HasReachedTarget(currentTarget);
         }
     }
 
-    public void HasReachedTarget()
+    public void HasReachedTarget(GameObject target)
     {
-        Debug.Log("HasReachedTarget()");
+        //Debug.Log("HasReachedTarget()");
+        ActionText.text = "Has Reached " + target.name;
         timeAtLocation = 0;
 
         if (returnHome)
@@ -311,16 +304,24 @@ public class NPCController : MonoBehaviour {
         currentTarget = null;
         pathToTarget = null;
         StopCoroutine(MovingTowardsTarget);
+        StartCoroutine(PerformTask(target.tag, target));
+    }
+
+    public Grid GetGrid()
+    {
+        return grid;
     }
 
     private void OnMouseEnter()
     {
         Canvas.gameObject.SetActive(true);
+        Radius_UI.gameObject.SetActive(true);
     }
 
     private void OnMouseExit()
     {
         Canvas.gameObject.SetActive(false);
+        Radius_UI.gameObject.SetActive(false);
     }
 
     void UpdateExpUI()
@@ -352,11 +353,12 @@ public class NPCController : MonoBehaviour {
                 // Find PlantBed
                 //Debug.Log("Looking for Task: " + GetTaskTarget());
                 ActionText.text = "Looking for " + stateMachine.GetTaskTarget();
-                currentTarget = SearchForTarget(GetTaskTarget());
+                currentTarget = SearchForTarget(stateMachine.GetTaskTarget());
                 if (currentTarget != null)
                 {
                     performingTask = true;
-                    Debug.Log("Found Task: " + GetTaskTarget());
+                    //Debug.Log("Found Task: " + currentTarget);
+                    ActionText.text = "Found Task: " + currentTarget.name;
                     FindPath(currentTarget);
                 }
             }
@@ -365,7 +367,7 @@ public class NPCController : MonoBehaviour {
             {
                 movingToTarget = true;
                 isWandering = false;
-                MovingTowardsTarget = StartCoroutine(MoveToTarget());
+                MovingTowardsTarget = StartCoroutine(MoveToTarget(currentTarget));
             }
 
             yield return new WaitForSeconds(1);
@@ -374,16 +376,22 @@ public class NPCController : MonoBehaviour {
 
     IEnumerator PerformTask(string location, GameObject a_target)
     {
+        TaskBehavior task = a_target.GetComponent<TaskBehavior>();
         int waitTime = 0;
 
+        while (!task.CanPerformTask())
+        {
+            yield return new WaitForSeconds(1);
+        }
+
         stateMachine.PerformTask(location, a_target);
-        waitTime += stateMachine.GetTaskDuration(location);
+        waitTime += task.GetTaskDuration();
         
         yield return new WaitForSeconds(waitTime);
         performingTask = false;
     }
 
-    IEnumerator MoveToTarget()
+    IEnumerator MoveToTarget(GameObject target)
     {
         Debug.Log("MovingToTarget()");
         while (Vector3.Distance(pathToTarget[pathToTarget.Count - 1].Position, transform.position) > 0.5f)
@@ -404,7 +412,6 @@ public class NPCController : MonoBehaviour {
             {
                 Vector3 startPos = transform.position;
                 float journeyLength = Vector3.Distance(pathToTarget[i].Position, transform.position);
-                float t = 0;
 
                 Vector3 newCurrentPos = new Vector3(
                         transform.position.x * 1,
@@ -453,7 +460,7 @@ public class NPCController : MonoBehaviour {
             Debug.Log("Reached Target");
             if (transform.position == pathToTarget[pathToTarget.Count -1].Position)
             {
-                HasReachedTarget();
+                HasReachedTarget(target);
                 yield break;
             }
             yield return new WaitForSeconds(1);

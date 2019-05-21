@@ -48,31 +48,24 @@ public class Farmer : IState
         return taskTarget;
     }
 
-    public int GetTaskDuration(string a_task)
-    {
-
-        if (a_task == "Home")
-        {
-            taskDuration = 1;
-        }
-
-        if (a_task == "Task")
-        {
-            taskDuration = 2;
-        }
-        return taskDuration;
-    }
-
     public void PerformTask(string a_location, GameObject a_target)
     {
-        if (a_location == "Home")
-        {
-            a_target.GetComponent<TaskBehavior>().CanPerformTask();
-        }
+        a_target.GetComponent<TaskBehavior>().PerformTask(this);
+        owner.ActionText.text = "Harvesting Crops";
+    }
 
-        if (a_location == "Task")
-        {
-            a_target.GetComponent<TaskBehavior>();
-        }
+    public int GetFoodCarryingNum()
+    {
+        return foodCarryingNum;
+    }
+
+    public void AddFoodCarryingNum(int new_Value)
+    {
+        foodCarryingNum = foodCarryingNum + new_Value;
+    }
+
+    public int GetNPCLevel()
+    {
+        return owner.myExp.level;
     }
 }

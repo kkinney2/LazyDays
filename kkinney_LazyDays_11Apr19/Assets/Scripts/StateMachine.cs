@@ -13,7 +13,6 @@ public interface IState
     void Exit();
 
     string GetTaskTarget();
-    int GetTaskDuration(string str);
     void PerformTask(string str, GameObject obj);
 }
 
@@ -73,11 +72,6 @@ public class StateMachine
     public string GetTaskTarget()
     {
         return currentState.GetTaskTarget();
-    }
-
-    public int GetTaskDuration(string a_location)
-    {
-        return currentState.GetTaskDuration(a_location);
     }
 
     public void PerformTask(string a_location, GameObject a_target)

@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class Grid : MonoBehaviour {
 
-    public Transform StartPosition;
+    //public Transform StartPosition;
     public LayerMask WallMask;
     public Vector2 gridWorldSize;
     public float nodeRadius;
@@ -50,8 +50,8 @@ public class Grid : MonoBehaviour {
 
     public Node NodeFromWorldPosition(Vector3 a_WorldPosition)
     {
-        float xpoint = ((a_WorldPosition.x + gridWorldSize.x / 2) / gridWorldSize.x);
-        float ypoint = ((a_WorldPosition.z + gridWorldSize.y / 2) / gridWorldSize.y);
+        float xpoint = ((a_WorldPosition.x + gridWorldSize.x / 2f) / gridWorldSize.x);
+        float ypoint = ((a_WorldPosition.z + gridWorldSize.y / 2f) / gridWorldSize.y);
 
         xpoint = Mathf.Clamp01(xpoint);
         ypoint = Mathf.Clamp01(ypoint);

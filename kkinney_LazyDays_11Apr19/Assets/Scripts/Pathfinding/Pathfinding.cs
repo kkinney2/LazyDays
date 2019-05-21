@@ -8,8 +8,8 @@ public class Pathfinding : MonoBehaviour {
     public GameObject GameController;
     public NPCController owner;
     public Grid grid;
-    public Transform StartPosition;
-    public Transform TargetPosition;
+    //public Transform StartPosition;
+    //public Transform TargetPosition;
 
     /*private void Awake()
     {
@@ -21,36 +21,32 @@ public class Pathfinding : MonoBehaviour {
         //grid = GetComponent<Grid>();
     }*/
 
-    /*private void Start()
+    private void Start()
     {
-        if (gameObject.name == "GameController")
-        {
-            grid = GetComponent<Grid>();
-        }
-        else grid = GameController.GetComponent<Grid>();
-    }*/
+        grid = owner.GetGrid();
+    }
 
     private void Update()
     {
-        if (GameController == null)
+        /*if (GameController == null)
         {
             if (gameObject.name == "GameController")
             {
                 grid = GetComponent<Grid>();
             }
-            else grid = owner.grid;
-        }
+            else grid = owner.GetGrid();
+        }*/
 
-        if (TargetPosition != null)
+        /*if (TargetPosition != null)
         {
             FindPath(StartPosition.position, TargetPosition.position);
-        }
+        }*/
 
     }
 
-    public void FindPathtoTarget(Transform a_StartPos ,Transform a_TargetPos)
+    public void FindPathtoTarget(Vector3 a_StartPos , Vector3 a_TargetPos)
     {
-        FindPath(a_StartPos.position, a_TargetPos.position);
+        FindPath(a_StartPos, a_TargetPos);
     }
 
 
